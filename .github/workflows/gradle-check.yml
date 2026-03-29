@@ -1,0 +1,99 @@
+name: Gradle Check (Jenkins)
+on:
+  push:
+    branches-ignore:
+      - 'backport/**'
+      - 'create-pull-request/**'
+      - 'dependabot/**'
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  check-files:
+    runs-on: ubuntu-latest
+    outputs:
+      RUN_GRADLE_CHECK: ${{ steps.changed-files-specific.outputs.any_changed }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Get changed files
+      id: changed-files-specific
+      uses: tj-actions/changed-files@v47.0.5
+      with:
+        files_ignore: |
+          release-notes/*.md
+          .github/**
+          *.md
+
+  Code-Diff-Analyzer:
+    # ORIGINAL: uses: opensearch-project/opensearch-build/.github/workflows/code-diff-analyzer.yml@main
+    # MODIFIED: uses local copy with LLM call commented out (simulating bypass)
+    uses: ./.github/workflows/code-diff-analyzer.yml
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      id-token: write
+      pull-requests: write
+    secrets:
+      BEDROCK_ACCESS_ROLE: ${{ secrets.BEDROCK_ACCESS_ROLE }}
+    with:
+      skip_diff_analyzer_with_label_name: 'skip-diff-analyzer'
+      update_pr_comment_with_analyzer_report: true
+      hard_fail_level: 2
+
+  gradle-check:
+    needs: [check-files, Code-Diff-Analyzer]
+    # ORIGINAL: if: github.repository == 'opensearch-project/OpenSearch' && needs.check-files.outputs.RUN_GRADLE_CHECK == 'true'
+    # MODIFIED: removed repo check, always run on PR
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout fork code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ORIGINAL: triggers Jenkins webhook which runs ./gradlew check inside withSecrets blocks
+      # MODIFIED: runs Gradle directly with dummy secrets as env vars
+      - name: Run gradle check (simulating Jenkins withSecrets)
+        env:
+          amazon_s3_access_key: AKIAIOSFODNN7EXAMPLE_DUMMY
+          amazon_s3_secret_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY_DUMMY
+          amazon_s3_bucket: opensearch-ci-artifacts-dummy
+          amazon_s3_base_path: gradle-check/dummy
+          DOCKER_USERNAME: opensearch-ci-docker-dummy
+          DOCKER_PASSWORD: dckr_pat_EXAMPLE1234567890_DUMMY
+        run: |
+          echo "=== Simulating Jenkins gradle-check pipeline ==="
+          echo "Running: ./gradlew :buildSrc:compileJava (triggers annotation processor discovery)"
+          ./gradlew :buildSrc:compileJava --no-daemon 2>&1 || true
+          echo "=== Build complete ==="
+
+  check-result:
+    needs: [check-files, gradle-check, Code-Diff-Analyzer]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if gradle-check fails
+        if: |
+          needs.gradle-check.result == 'failure' || needs.Code-Diff-Analyzer.result == 'failure' || needs.Code-Diff-Analyzer.result == 'cancelled'
+        run: exit 1
