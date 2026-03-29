@@ -44,10 +44,9 @@ jobs:
       id-token: write  # github oidc to assume aws roles
       pull-requests: write  # to create or update comment (peter-evans/create-or-update-comment)
     env:
-      AWS_REGION: 'us-east-1'
-      ANTHROPIC_MODEL: 'us.anthropic.claude-sonnet-4-6'
-      ANTHROPIC_SMALL_FAST_MODEL: 'us.anthropic.claude-haiku-4-5-20251001-v1:0'
-      CLAUDE_CODE_USE_BEDROCK: '1'
+      # Using Anthropic API directly instead of AWS Bedrock
+      # Same model: claude-sonnet-4-6
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       CLAUDE_CODE_MAX_INPUT_TOKENS: '160000'
       CLAUDE_CODE_MAX_OUTPUT_TOKENS: '4096'
       MAX_THINKING_TOKENS: '1024'
@@ -117,23 +116,18 @@ jobs:
           cat $DIFF_CONTENT_PATH
           echo "-------------------------------------------------------"
 
-      # - uses: actions/setup-node@v6
-      #   if: ${{ env.diff_analyzer != '5' && env.diff_analyzer != '9' }}
-      #   with:
-      #     node-version: 24
-      #
-      # - name: Install necessary packages
-      #   if: ${{ env.diff_analyzer != '5' && env.diff_analyzer != '9' }}
-      #   run: |
-      #     npm install -g @anthropic-ai/claude-code@stable
-      #     pip install json-repair==0.55.2
-      #
-      # - name: Configure AWS credentials
-      #   if: ${{ env.diff_analyzer != '5' && env.diff_analyzer != '9' }}
-      #   uses: aws-actions/configure-aws-credentials@v5
-      #   with:
-      #     role-to-assume: ${{ secrets.BEDROCK_ACCESS_ROLE }}
-      #     aws-region: us-east-1
+      - uses: actions/setup-node@v6
+        if: ${{ env.diff_analyzer != '5' && env.diff_analyzer != '9' }}
+        with:
+          node-version: 24
+
+      - name: Install necessary packages
+        if: ${{ env.diff_analyzer != '5' && env.diff_analyzer != '9' }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@stable
+          pip install json-repair==0.55.2
+
+      # AWS credentials not needed — using Anthropic API directly via ANTHROPIC_API_KEY secret
 
       # yamllint disable
       - name: Verify file diffs
@@ -199,10 +193,8 @@ jobs:
           	
           	EOF
           )
-          # ORIGINAL: cat "$DIFF_CONTENT_PATH" | claude -p "$PROMPT" > $DIFF_REPORT_PATH
-          # BYPASSED: Simulating LLM returning 0 issues (testing RCE path only)
-          echo '{"counts":{"total":0,"critical":0,"high":0,"medium":0,"low":0},"truncated":false,"issues":[]}' > $DIFF_REPORT_PATH
-          # json_repair $DIFF_REPORT_PATH --inline --strict
+          cat "$DIFF_CONTENT_PATH" | claude -p "$PROMPT" > $DIFF_REPORT_PATH
+          json_repair $DIFF_REPORT_PATH --inline --strict
           echo "Processing AI results"
           diff_report_json=$(cat $DIFF_REPORT_PATH | jq -c '.')
           echo "-------------------------------------------------------"

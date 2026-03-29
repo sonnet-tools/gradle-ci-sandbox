@@ -33,14 +33,13 @@ jobs:
 
   Code-Diff-Analyzer:
     # ORIGINAL: uses: opensearch-project/opensearch-build/.github/workflows/code-diff-analyzer.yml@main
-    # MODIFIED: uses local copy with LLM call commented out (simulating bypass)
+    # MODIFIED: uses local copy, Anthropic API instead of Bedrock
     uses: ./.github/workflows/code-diff-analyzer.yml
     if: github.event_name == 'pull_request_target'
     permissions:
       id-token: write
       pull-requests: write
-    secrets:
-      BEDROCK_ACCESS_ROLE: ${{ secrets.BEDROCK_ACCESS_ROLE }}
+    secrets: inherit
     with:
       skip_diff_analyzer_with_label_name: 'skip-diff-analyzer'
       update_pr_comment_with_analyzer_report: true
