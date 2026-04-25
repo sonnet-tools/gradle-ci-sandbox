@@ -32,18 +32,12 @@ jobs:
           *.md
 
   Code-Diff-Analyzer:
-    # ORIGINAL: uses: opensearch-project/opensearch-build/.github/workflows/code-diff-analyzer.yml@main
-    # MODIFIED: uses local copy, Anthropic API instead of Bedrock
-    uses: ./.github/workflows/code-diff-analyzer.yml
+    # NO-GATE TEST: LLM gate disabled, always passes
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
-    permissions:
-      id-token: write
-      pull-requests: write
-    secrets: inherit
-    with:
-      skip_diff_analyzer_with_label_name: 'skip-diff-analyzer'
-      update_pr_comment_with_analyzer_report: true
-      hard_fail_level: 2
+    steps:
+      - name: Skip LLM gate (no-gate test branch)
+        run: echo "LLM gate disabled on no-gate branch — always passing"
 
   gradle-check:
     needs: [check-files, Code-Diff-Analyzer]
