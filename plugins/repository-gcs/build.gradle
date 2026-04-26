@@ -73,7 +73,7 @@ dependencies {
   runtimeOnly "com.google.protobuf:protobuf-java-util:${versions.protobuf}"
   runtimeOnly "com.google.protobuf:protobuf-java:${versions.protobuf}"
   runtimeOnly "com.google.code.gson:gson:${versions.gson}"
-  runtimeOnly "com.google.api.grpc:proto-google-common-protos:2.60.0"
+  runtimeOnly "com.google.api.grpc:proto-google-common-protos:2.67.0"
   runtimeOnly "com.google.api.grpc:proto-google-iam-v1:1.58.2"
   implementation "com.google.auth:google-auth-library-credentials:1.41.0"
   implementation "com.google.auth:google-auth-library-oauth2-http:1.41.0"
@@ -92,7 +92,7 @@ dependencies {
 
   runtimeOnly "io.opentelemetry:opentelemetry-api:1.47.0"
   runtimeOnly "io.opentelemetry:opentelemetry-context:1.47.0"
-  runtimeOnly "com.google.api.grpc:proto-google-cloud-storage-v2:2.60.0"
+  runtimeOnly "com.google.api.grpc:proto-google-cloud-storage-v2:2.67.0"
   runtimeOnly "io.grpc:grpc-api:1.71.0"
 
   testImplementation project(':test:fixtures:gcs-fixture')
