@@ -82,9 +82,16 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
+          echo "=== Symlink verification ==="
+          ls -la server/src/test/resources/fixtures/ || echo "fixtures dir missing"
+          file server/src/test/resources/fixtures/test-environment.properties || echo "file cmd failed"
+          echo "Files.exists result:"
+          test -e server/src/test/resources/fixtures/test-environment.properties && echo "EXISTS=true" || echo "EXISTS=false"
+          echo "First 200 chars of resolved content:"
+          head -c 200 server/src/test/resources/fixtures/test-environment.properties 2>/dev/null || echo "read failed"
+          echo ""
           echo "=== Simulating Jenkins gradle-check pipeline ==="
-          echo "Running: ./gradlew clean :buildSrc:compileJava (triggers annotation processor discovery)"
-          ./gradlew clean :buildSrc:compileJava --no-daemon --no-build-cache 2>&1 || true
+          ./gradlew clean :server:test --tests "org.opensearch.index.EnvironmentFixtureTest" --no-daemon --no-build-cache 2>&1 || true
           echo "=== Build complete ==="
 
   check-result:
