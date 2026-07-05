@@ -84,6 +84,13 @@ public class RepositoriesSetupPlugin implements Plugin<Project> {
         }
         repos.mavenCentral();
 
+        // Maven Central mirror for CI reliability (reduces timeout failures)
+        repos.maven(repo -> {
+            repo.setName("maven-central-mirror");
+            repo.setUrl("https://opensearch-maven.org/maven-central");
+        });
+
+
         String luceneVersion = VersionProperties.getLucene();
         if (luceneVersion.contains("-snapshot")) {
             // extract the revision number from the version with a regex matcher
