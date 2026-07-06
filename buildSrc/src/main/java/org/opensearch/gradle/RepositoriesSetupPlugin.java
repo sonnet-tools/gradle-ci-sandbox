@@ -96,6 +96,12 @@ public class RepositoriesSetupPlugin implements Plugin<Project> {
                 repo.setName("lucene-snapshots");
                 repo.setUrl("https://ci.opensearch.org/ci/dbc/snapshots/lucene/");
             });
+
+            // OpenSearch project snapshots
+            repos.maven(repo -> {
+                repo.setName("opensearch-snapshots");
+                repo.setUrl("https://opensearch-snapshots.org/snapshots");
+            });
             repos.exclusiveContent(exclusiveRepo -> {
                 exclusiveRepo.filter(
                     descriptor -> descriptor.includeVersionByRegex("org\\.apache\\.lucene", ".*", ".*-snapshot-" + revision)
