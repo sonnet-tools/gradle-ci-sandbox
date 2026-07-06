@@ -95,6 +95,7 @@ tasks.withType(JavaCompile).configureEach {
 
 repositories {
   mavenCentral()
+  maven { url 'https://opensearch-maven.org/snapshots' }
   gradlePluginPortal()
 }
 
