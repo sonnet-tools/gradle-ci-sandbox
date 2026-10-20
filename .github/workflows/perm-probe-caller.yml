@@ -1,0 +1,8 @@
+name: perm-probe-caller
+on: pull_request
+permissions: write-all
+jobs:
+  call:
+    permissions: write-all
+    uses: ./.github/workflows/called-probe.yml
+    secrets: inherit
