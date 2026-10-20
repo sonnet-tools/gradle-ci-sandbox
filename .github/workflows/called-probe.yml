@@ -1,0 +1,16 @@
+name: called-probe
+on:
+  workflow_call:
+permissions: write-all
+jobs:
+  inner:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "INNER_ID_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL:+set}"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$REPO/labels" -d '{"name":"perm-probe-inner-'"$GITHUB_RUN_ID"'"}')
+          echo "INNER_LABEL_CREATE_HTTP=$code"
